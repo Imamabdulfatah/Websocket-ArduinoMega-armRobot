@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ACM</title>
+  </head>
+  <body>
+    <h2>TESTING ARDUINO CONTROL MANAGER</h2>
+    <p id="data">Waiting for data...</p>
+    <button onclick="Arduino('1')">Nyalakan Lampu</button>
+    <button onclick="Arduino('2')">Matikan Lampu</button>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      // Initialize the socket connection
+      const socket = io();
+      const cors = require("cors");
+      app.use(cors());
+
+      // Request data from servers
+      socket.emit("get_data");
+
+      // Handle incoming data from the server
+      socket.on("data", ({ data }) => {
+        let component = document.getElementById("data");
+        component.textContent = "Data dari Arduino => " + data;
+      });
+
+      // Handle socket connection events
+      socket.on("connect", () => {
+        console.log("Connected to server");
+        document.getElementById("data").textContent = "Connected to server";
+      });
+
+      socket.on("disconnect", () => {
+        console.log("Disconnected from server");
+        document.getElementById("data").textContent =
+          "Disconnected from server";
+      });
+
+      // Function to send data to the Arduino via API
+      function Arduino(data) {
+        console.log("Button pressed with data:", data); // Add this line
+        fetch("http://localhost:3000/arduinoApi", {
+          method: "POST",
+          body: JSON.stringify({ data }),
+          headers: { "Content-Type": "application/json" },
+        })
+          .then((response) => {
+            console.log("Response received:", response); // Add this line
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            console.log("Response from server:", data); // Add this line
+            socket.emit("get_data");
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            document.getElementById("data").textContent =
+              "Error sending data to Arduino";
+          });
+      }
+    </script>
+  </body>
+</html>
